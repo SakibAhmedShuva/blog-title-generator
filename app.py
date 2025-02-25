@@ -22,6 +22,10 @@ index_path = os.path.join(template_path, "index.html")
 print(f"Index.html path: {index_path}")
 print(f"Index.html exists: {os.path.exists(index_path)}")
 
+# Initialize variables
+title_chain = None
+llm = None
+
 # Initialize Groq LLM
 try:
     api_key = os.getenv("GROQ_API_KEY")
@@ -67,6 +71,10 @@ def send_static(path):
 @app.route("/generate", methods=["POST"])
 def generate_titles():
     try:
+        # Check if title_chain is initialized
+        if title_chain is None:
+            return jsonify({"error": "LLM not initialized properly. Check your API key and model configuration."}), 500
+            
         # Print debug info about the request
         print(f"Request received: {request.method}")
         print(f"Content-Type: {request.headers.get('Content-Type')}")
