@@ -1,0 +1,189 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Title Generator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .title {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #6c757d;
+            margin-bottom: 30px;
+        }
+        .btn-primary {
+            background-color: #4169e1;
+            width: 100%;
+            padding: 10px;
+        }
+        .cancel-btn {
+            text-align: center;
+            margin-top: 10px;
+            color: #6c757d;
+            cursor: pointer;
+        }
+        .results {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+        }
+        .error-message {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="title">Generate blog title</h2>
+        <p class="subtitle">Craft your blog title with ease with BEE! Just fill in the blanks below and hit 'Generate' to see the magic happen.</p>
+        
+        <div id="form-container">
+            <div class="form-group">
+                <label for="topic">What's this blog about?</label>
+                <input type="text" class="form-control" id="topic" placeholder="Ex: How to rent a car smoothly">
+            </div>
+            
+            <div class="form-group">
+                <label for="tone">Tone</label>
+                <select class="form-control" id="tone">
+                    <option value="casual">Casual</option>
+                    <option value="professional">Professional</option>
+                    <option value="humorous">Humorous</option>
+                    <option value="authoritative">Authoritative</option>
+                    <option value="inspirational">Inspirational</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="instructions">Instructions (optional)</label>
+                <input type="text" class="form-control" id="instructions" placeholder="Ex: Make it an FAQ">
+            </div>
+            
+            <button id="generate-btn" class="btn btn-primary">Generate</button>
+            <div class="cancel-btn">Cancel</div>
+            <div id="error-message" class="error-message"></div>
+        </div>
+        
+        <div id="results" class="results" style="display: none;">
+            <h4>Generated Titles:</h4>
+            <ul id="titles-list" class="list-group">
+                <!-- Titles will be added here -->
+            </ul>
+            <button id="back-btn" class="btn btn-secondary mt-3">Generate More</button>
+        </div>
+    </div>
+
+    <script>
+        // Test API connection on page load
+        fetch('/test')
+            .then(response => response.json())
+            .then(data => {
+                console.log('API test successful:', data);
+            })
+            .catch(error => {
+                console.error('API test failed:', error);
+                document.getElementById('error-message').textContent = 'API connection error. Please check if the server is running.';
+            });
+        
+        document.getElementById('generate-btn').addEventListener('click', function() {
+            const topic = document.getElementById('topic').value;
+            const tone = document.getElementById('tone').value;
+            const instructions = document.getElementById('instructions').value;
+            const errorMessage = document.getElementById('error-message');
+            
+            errorMessage.textContent = '';
+            
+            if (!topic) {
+                errorMessage.textContent = 'Please enter what your blog is about';
+                return;
+            }
+            
+            // Show loading state
+            this.innerHTML = 'Generating...';
+            this.disabled = true;
+            
+            console.log('Sending request with:', { topic, tone, instructions });
+            
+            fetch('/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    topic: topic,
+                    tone: tone,
+                    instructions: instructions || 'Make the titles catchy and SEO-friendly'
+                }),
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Received data:', data);
+                
+                // Reset button
+                this.innerHTML = 'Generate';
+                this.disabled = false;
+                
+                if (data.error) {
+                    errorMessage.textContent = data.error;
+                    return;
+                }
+                
+                // Display results
+                const titlesList = document.getElementById('titles-list');
+                titlesList.innerHTML = '';
+                
+                data.titles.forEach(title => {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item';
+                    li.textContent = title;
+                    titlesList.appendChild(li);
+                });
+                
+                document.getElementById('form-container').style.display = 'none';
+                document.getElementById('results').style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                this.innerHTML = 'Generate';
+                this.disabled = false;
+                errorMessage.textContent = 'Error: ' + error;
+            });
+        });
+        
+        document.getElementById('back-btn').addEventListener('click', function() {
+            document.getElementById('form-container').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+        });
+        
+        document.querySelector('.cancel-btn').addEventListener('click', function() {
+            document.getElementById('topic').value = '';
+            document.getElementById('instructions').value = '';
+            document.getElementById('tone').selectedIndex = 0;
+        });
+    </script>
+</body>
+</html>
