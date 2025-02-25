@@ -5,3 +5,4 @@ langchain-groq==0.2.4
 python-dotenv==1.0.1
 groq==0.15.0
 langchain-core==0.3.39
+gunicorn
